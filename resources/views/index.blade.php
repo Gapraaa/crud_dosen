@@ -33,93 +33,63 @@
         <table class="table-auto w-full bg-gray-800 rounded">
             <thead>
                 <tr>
-                    <th class="px-4 py-2">NIDN</th>
-                    <th class="px-4 py-2">Nama Dosen</th>
-                    <th class="px-4 py-2">Tanggal Mulai Tugas</th>
-                    <th class="px-4 py-2">Jenjang Pendidikan</th>
-                    <th class="px-4 py-2">Bidang Keilmuan</th>
-                    <th class="px-4 py-2">Foto</th>
-                    <th class="px-4 py-2">Actions</th>
+                    <th class="px-4 py-2 text-center">No</th>
+                    <th class="px-4 py-2 text-center">NIDN</th>
+                    <th class="px-4 py-2 text-center">Nama Dosen</th>
+                    <th class="px-4 py-2 text-center">Tanggal Mulai Tugas</th>
+                    <th class="px-4 py-2 text-center">Jenjang Pendidikan</th>
+                    <th class="px-4 py-2 text-center">Bidang Keilmuan</th>
+                    <th class="px-4 py-2 text-center">Foto</th>
+                    <th class="px-4 py-2 text-center">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @if ($dosens->count())
                     @foreach ($dosens as $dosen)
-                        <tr class="bg-gray-700 border-t border-gray-600">
-                            <td class="px-4 py-2">{{ $dosen->nidn }}</td>
-                            <td class="px-4 py-2">{{ $dosen->nama_dosen }}</td>
-                            <td class="px-4 py-2">{{ $dosen->bidang_keilmuan }}</td>
-                            <td class="px-4 py-2 flex space-x-2">
-                                <!-- Detail Button -->
-                                <button onclick="openModal('detail-{{ $dosen->nidn }}')" class="bg-green-500 p-2 rounded">
+                        <tr class="bg-gray-700 border-t border-gray-600 text-center">
+                            <td class="px-4 py-2 align-middle">{{ $loop->iteration }}</td> <!-- Nomor -->
+                            <td class="px-4 py-2 align-middle">{{ $dosen->nidn }}</td>
+                            <td class="px-4 py-2 align-middle">{{ $dosen->nama_dosen }}</td>
+                            <td class="px-4 py-2 align-middle">{{ $dosen->tgl_mulai_tugas }}</td>
+                            <td class="px-4 py-2 align-middle">{{ $dosen->jenjang_pendidikan }}</td>
+                            <td class="px-4 py-2 align-middle">{{ $dosen->bidang_keilmuan }}</td>
+                            <td class="px-4 py-2 align-middle">
+                                @if ($dosen->foto_dosen)
+                                    <img src="{{ asset('storage/' . $dosen->foto_dosen) }}" alt="Foto Dosen"
+                                        class="w-12 h-12 object-cover rounded-full">
+                                @else
+                                    <span>Tidak ada foto</span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-2 align-middle flex justify-center space-x-2">
+                                <button onclick="openModal('detail-{{ $dosen->nidn }}')"
+                                    class="bg-green-500 p-2 rounded">
                                     <i class="fas fa-eye"></i>
                                 </button>
-                                <!-- Edit Button -->
-                                <button onclick="openModal('edit-{{ $dosen->nidn }}')" class="bg-yellow-500 p-2 rounded">
+                                <button onclick="openModal('edit-{{ $dosen->nidn }}')"
+                                    class="bg-yellow-500 p-2 rounded">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <!-- Delete Button -->
-                                <form action="{{ route('dosen.destroy', $dosen->nidn) }}" method="POST" class="inline">
+                                <form action="{{ route('dosen.destroy', $dosen->nidn) }}" method="POST"
+                                    class="inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="bg-red-500 p-2 rounded" onclick="return confirm('Apakah Anda yakin ingin menghapus?')">
+                                    <button type="submit" class="bg-red-500 p-2 rounded"
+                                        onclick="return confirm('Apakah Anda yakin ingin menghapus?')">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
                             </td>
                         </tr>
-            
-                        <!-- Detail Modal -->
-                        <div id="detail-{{ $dosen->nidn }}"
-                            class="modal hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
-                            <div class="bg-gray-700 p-4 rounded">
-                                <h2 class="text-xl font-bold">Detail Dosen</h2>
-                                <p>NIDN: {{ $dosen->nidn }}</p>
-                                <p>Nama: {{ $dosen->nama_dosen }}</p>
-                                <p>Bidang: {{ $dosen->bidang_keilmuan }}</p>
-                                <p>Tanggal Mulai Tugas: {{ $dosen->tgl_mulai_tugas }}</p>
-                                <p>Jenjang Pendidikan: {{ $dosen->jenjang_pendidikan }}</p>
-                                @if ($dosen->foto_dosen)
-                                    <img src="{{ asset('storage/' . $dosen->foto_dosen) }}" alt="Foto Dosen" class="w-24 h-24 object-cover">
-                                @endif
-                                <button onclick="closeModal('detail-{{ $dosen->nidn }}')" class="bg-red-500 p-2 mt-2 rounded">Close</button>
-                            </div>
-                        </div>
-            
-                        <!-- Edit Modal -->
-                        <div id="edit-{{ $dosen->nidn }}"
-                            class="modal hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
-                            <div class="bg-gray-700 p-4 rounded">
-                                <h2 class="text-xl font-bold">Edit Dosen</h2>
-                                <form action="{{ route('dosen.update', $dosen->nidn) }}" method="POST">
-                                    @csrf
-                                    @method('PUT')
-                                    <input type="text" name="nama_dosen" value="{{ $dosen->nama_dosen }}"
-                                        class="bg-gray-600 p-2 rounded w-full mb-2">
-                                    <input type="text" name="bidang_keilmuan" value="{{ $dosen->bidang_keilmuan }}"
-                                        class="bg-gray-600 p-2 rounded w-full mb-2">
-                                    <select name="jenjang_pendidikan" class="bg-gray-600 p-2 rounded w-full mb-2">
-                                        <option value="">Pilih Jenjang Pendidikan</option>
-                                        <option value="S2" {{ $dosen->jenjang_pendidikan == 'S2' ? 'selected' : '' }}>S2</option>
-                                        <option value="S3" {{ $dosen->jenjang_pendidikan == 'S3' ? 'selected' : '' }}>S3</option>
-                                    </select>
-                                    <input type="date" name="tgl_mulai_tugas" value="{{ $dosen->tgl_mulai_tugas }}"
-                                        class="bg-gray-600 p-2 rounded w-full mb-2">
-                                    <input type="file" name="foto_dosen" class="bg-gray-600 p-2 rounded w-full mb-2">
-                                    <button type="submit" class="bg-yellow-500 p-2 rounded">Update</button>
-                                </form>
-                                <button onclick="closeModal('edit-{{ $dosen->nidn }}')" class="bg-red-500 p-2 mt-2 rounded">Close</button>
-                            </div>
-                        </div>
                     @endforeach
                 @else
                     <tr>
-                        <td colspan="4" class="text-center py-4">Tidak dapat menemukan data dosen</td>
+                        <td colspan="8" class="text-center py-4">Tidak dapat menemukan data dosen</td>
                     </tr>
                 @endif
             </tbody>
-            
         </table>
+
 
         <!-- Pagination -->
         <div class="mt-4">
@@ -133,15 +103,19 @@
             <h2 class="text-xl font-bold">Tambah Dosen</h2>
             <form action="{{ route('dosen.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
-                <input type="text" name="nidn" placeholder="NIDN" class="bg-gray-600 p-2 rounded w-full mb-2">
-                <input type="text" name="nama_dosen" placeholder="Nama Dosen" class="bg-gray-600 p-2 rounded w-full mb-2">
-                <input type="date" name="tgl_mulai_tugas" placeholder="Tanggal Mulai Tugas" class="bg-gray-600 p-2 rounded w-full mb-2">
+                <input type="text" name="nidn" placeholder="NIDN" class="bg-gray-600 p-2 rounded w-full mb-2"
+                    maxlength="10" pattern="\d*" inputmode="numeric" required>
+                <input type="text" name="nama_dosen" placeholder="Nama Dosen"
+                    class="bg-gray-600 p-2 rounded w-full mb-2">
+                <input type="date" name="tgl_mulai_tugas" placeholder="Tanggal Mulai Tugas"
+                    class="bg-gray-600 p-2 rounded w-full mb-2">
                 <select name="jenjang_pendidikan" class="bg-gray-600 p-2 rounded w-full mb-2">
                     <option value="">Pilih Jenjang Pendidikan</option>
                     <option value="S2">S2</option>
                     <option value="S3">S3</option>
-                </select>                
-                <input type="text" name="bidang_keilmuan" placeholder="Bidang Keilmuan" class="bg-gray-600 p-2 rounded w-full mb-2">
+                </select>
+                <input type="text" name="bidang_keilmuan" placeholder="Bidang Keilmuan"
+                    class="bg-gray-600 p-2 rounded w-full mb-2">
                 <input type="file" name="foto_dosen" class="bg-gray-600 p-2 rounded w-full mb-2">
                 <button type="submit" class="bg-green-500 p-2 rounded">Simpan</button>
             </form>
