@@ -6,6 +6,9 @@ use App\Models\Dosen;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class DosenController extends Controller
 {
@@ -99,5 +102,48 @@ class DosenController extends Controller
         $dosen->delete();
 
         return redirect()->route('dosen.index')->with('success', 'Dosen deleted successfully.');
+    }
+
+    public function exportExcel()
+    {
+        // Fetch all dosen records
+        $dosens = Dosen::all();
+
+        // Create a new Spreadsheet object
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Set the table headers
+        $sheet->setCellValue('A1', 'No');
+        $sheet->setCellValue('B1', 'NIDN');
+        $sheet->setCellValue('C1', 'Nama Dosen');
+        $sheet->setCellValue('D1', 'Tanggal Mulai Tugas');
+        $sheet->setCellValue('E1', 'Jenjang Pendidikan');
+        $sheet->setCellValue('F1', 'Bidang Keilmuan');
+
+        // Loop through dosens and add to the Excel sheet
+        $row = 2; // Row number to start data input
+        foreach ($dosens as $index => $dosen) {
+            $sheet->setCellValue('A' . $row, $index + 1);
+            $sheet->setCellValue('B' . $row, $dosen->nidn);
+            $sheet->setCellValue('C' . $row, $dosen->nama_dosen);
+            $sheet->setCellValue('D' . $row, $dosen->tgl_mulai_tugas);
+            $sheet->setCellValue('E' . $row, $dosen->jenjang_pendidikan);
+            $sheet->setCellValue('F' . $row, $dosen->bidang_keilmuan);
+            $row++;
+        }
+
+        // Create Excel file writer
+        $writer = new Xlsx($spreadsheet);
+
+        // Prepare the file for download
+        $fileName = 'data_dosen.xlsx';
+        $temp_file = tempnam(sys_get_temp_dir(), $fileName);
+
+        // Save the file to temporary path
+        $writer->save($temp_file);
+
+        // Return the file as download
+        return Response::download($temp_file, $fileName)->deleteFileAfterSend(true);
     }
 }

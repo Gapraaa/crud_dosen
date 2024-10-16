@@ -19,3 +19,4 @@ Route::get('/', function () {
 });
 
 Route::resource('dosen', DosenController::class);
+Route::get('/dosen/export', [DosenController::class, 'exportExcel'])->name('dosen.export');
