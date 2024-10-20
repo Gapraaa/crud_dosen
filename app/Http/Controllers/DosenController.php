@@ -5,10 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Dosen;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use PDF;
 use Illuminate\Support\Facades\Storage;
+use App\Exports\DosenExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Response;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class DosenController extends Controller
 {
@@ -26,37 +27,35 @@ class DosenController extends Controller
 
     public function store(Request $request)
     {
+        // Validasi data input
         $validated = $request->validate([
             'nidn' => 'required|unique:dosen|max:10',
             'nama_dosen' => 'required|max:50',
             'tgl_mulai_tugas' => 'required|date',
             'jenjang_pendidikan' => 'required|max:10',
             'bidang_keilmuan' => 'required|max:50',
-            'foto_dosen' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'foto_dosen' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validasi file gambar
         ]);
-
+    
+        // Cek apakah ada file foto yang diupload
         if ($request->hasFile('foto_dosen')) {
-            $originalName = pathinfo($request->file('foto_dosen')->getClientOriginalName(), PATHINFO_FILENAME);
             $extension = $request->file('foto_dosen')->getClientOriginalExtension();
-
-            // Trim the filename to a reasonable length (e.g., 40 characters to keep within 50 characters total)
-            $trimmedName = substr($originalName, 0, 40);
-
-            // Generate the full filename with timestamp and extension
-            $fileName = $trimmedName . '_' . time() . '.' . $extension;
-
-            // Save in 'dosen_photos' directory
+    
+            // Generate nama file acak dengan panjang 10 karakter
+            $fileName = Str::random(10) . '.' . $extension;
+    
+            // Simpan file di direktori 'dosen_photos' di penyimpanan publik
             $filePath = $request->file('foto_dosen')->storeAs('dosen_photos', $fileName, 'public');
             $validated['foto_dosen'] = $filePath;
         }
-
+    
+        // Buat record baru di database
         Dosen::create($validated);
-
+    
+        // Redirect ke halaman daftar dosen dengan pesan sukses
         return redirect()->route('dosen.index')->with('success', 'Dosen created successfully.');
     }
-
-
-
+    
     public function show($nidn)
     {
         $dosen = Dosen::findOrFail($nidn);
@@ -70,31 +69,36 @@ class DosenController extends Controller
     }
 
     public function update(Request $request, $nidn)
-    {
-        // Validate the input data
-        $validated = $request->validate([
-            'nama_dosen' => 'required|max:50',
-            'tgl_mulai_tugas' => 'required|date',
-            'jenjang_pendidikan' => 'required|max:10',
-            'bidang_keilmuan' => 'required|max:50',
-            'foto_dosen' => 'nullable|image|max:2048', // Validate file as an image with max size of 2MB
-        ]);
+{
+    // Validate the input data
+    $validated = $request->validate([
+        'nama_dosen' => 'required|max:50',
+        'tgl_mulai_tugas' => 'required|date',
+        'jenjang_pendidikan' => 'required|max:10',
+        'bidang_keilmuan' => 'required|max:50',
+        'foto_dosen' => 'nullable|image|max:2048', // Validate file as an image with max size of 2MB
+    ]);
 
-        $dosen = Dosen::findOrFail($nidn);
+    $dosen = Dosen::findOrFail($nidn);
 
-        if ($request->hasFile('foto_dosen')) {
-            $filePath = $request->file('foto_dosen')->store('dosen_photos', 'public');
-            $validated['foto_dosen'] = $filePath;
-            if ($dosen->foto_dosen) {
-                Storage::disk('public')->delete($dosen->foto_dosen);
-            }
+    if ($request->hasFile('foto_dosen')) {
+        // Generate random string for file name
+        $randomName = Str::random(10) . '.' . $request->file('foto_dosen')->getClientOriginalExtension();
+
+        // Store the file with the random name
+        $filePath = $request->file('foto_dosen')->storeAs('dosen_photos', $randomName, 'public');
+        $validated['foto_dosen'] = $filePath;
+
+        // Delete the old photo if it exists
+        if ($dosen->foto_dosen) {
+            Storage::disk('public')->delete($dosen->foto_dosen);
         }
-
-        $dosen->update($validated);
-
-        return redirect()->route('dosen.index')->with('success', 'Dosen updated successfully.');
     }
 
+    $dosen->update($validated);
+
+    return redirect()->route('dosen.index')->with('success', 'Dosen updated successfully.');
+}
 
     public function destroy($nidn)
     {
@@ -103,47 +107,21 @@ class DosenController extends Controller
 
         return redirect()->route('dosen.index')->with('success', 'Dosen deleted successfully.');
     }
-
-    public function exportExcel()
+    
+    public function exportPDF()
     {
-        // Fetch all dosen records
+        // Ambil semua data dosen
         $dosens = Dosen::all();
 
-        // Create a new Spreadsheet object
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
+        // Load view yang akan dijadikan PDF
+        $pdf = PDF::loadView('pdf', compact('dosens'));
 
-        // Set the table headers
-        $sheet->setCellValue('A1', 'No');
-        $sheet->setCellValue('B1', 'NIDN');
-        $sheet->setCellValue('C1', 'Nama Dosen');
-        $sheet->setCellValue('D1', 'Tanggal Mulai Tugas');
-        $sheet->setCellValue('E1', 'Jenjang Pendidikan');
-        $sheet->setCellValue('F1', 'Bidang Keilmuan');
+        // Unduh file PDF dengan nama 'data_dosen.pdf'
+        return $pdf->download('data_dosen.pdf');
+    }
 
-        // Loop through dosens and add to the Excel sheet
-        $row = 2; // Row number to start data input
-        foreach ($dosens as $index => $dosen) {
-            $sheet->setCellValue('A' . $row, $index + 1);
-            $sheet->setCellValue('B' . $row, $dosen->nidn);
-            $sheet->setCellValue('C' . $row, $dosen->nama_dosen);
-            $sheet->setCellValue('D' . $row, $dosen->tgl_mulai_tugas);
-            $sheet->setCellValue('E' . $row, $dosen->jenjang_pendidikan);
-            $sheet->setCellValue('F' . $row, $dosen->bidang_keilmuan);
-            $row++;
-        }
-
-        // Create Excel file writer
-        $writer = new Xlsx($spreadsheet);
-
-        // Prepare the file for download
-        $fileName = 'data_dosen.xlsx';
-        $temp_file = tempnam(sys_get_temp_dir(), $fileName);
-
-        // Save the file to temporary path
-        $writer->save($temp_file);
-
-        // Return the file as download
-        return Response::download($temp_file, $fileName)->deleteFileAfterSend(true);
+    public function exportEXCEL()
+    {
+        return Excel::download(new DosenExport, 'dosen.xlsx');
     }
 }

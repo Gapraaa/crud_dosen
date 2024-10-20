@@ -28,8 +28,12 @@
                 <i class="fas fa-plus"></i> Tambah Dosen
             </button>
 
-            <a href="{{ route('dosen.export') }}" class="bg-blue-500 p-2 rounded ml-4">
+            <a href="{{ route('dosen.export.excel') }}" class="bg-blue-500 p-2 rounded ml-4">
                 <i class="fas fa-file-excel"></i> Export to Excel
+            </a>
+
+            <a href="{{ route('dosens.export.pdf') }}" class="bg-red-500 p-2 rounded ml-4">
+                <i class="fas fa-file-pdf"></i> Export top PDF
             </a>
         </div>
 
@@ -161,14 +165,21 @@
                 <input type="text" name="nama_dosen" placeholder="Nama Dosen"
                     class="bg-gray-600 p-2 rounded w-full mb-2">
                 <input type="date" name="tgl_mulai_tugas" placeholder="Tanggal Mulai Tugas"
-                    class="bg-gray-600 p-2 rounded w-full mb-2">
+                    class="bg-gray-600 p-2 rounded w-full mb-2" max="{{ date('Y-m-d') }}">
                 <select name="jenjang_pendidikan" class="bg-gray-600 p-2 rounded w-full mb-2">
                     <option value="">Pilih Jenjang Pendidikan</option>
                     <option value="S2">S2</option>
                     <option value="S3">S3</option>
                 </select>
-                <input type="text" name="bidang_keilmuan" placeholder="Bidang Keilmuan"
+                <select type="text" name="bidang_keilmuan" placeholder="Bidang Keilmuan"
                     class="bg-gray-600 p-2 rounded w-full mb-2">
+                    <option value="">Pilih Bidang Keilmuan</option>
+                    <option value="Teknik Informatika">Teknik Informatika</option>
+                    <option value="Teknik Mesin">Teknik Mesin</option>
+                    <option value="Teknik Elektro">Teknik Elektro</option>
+                    <option value="Fisika">Fisika</option>
+                    <option value="Ilmu Kedokteran">Ilmu Kedokteran</option>
+                    <option value="Sastra Jepang">Sastra Jepang</option>
                 <input type="file" name="foto_dosen" class="bg-gray-600 p-2 rounded w-full mb-2">
                 <button type="submit" class="bg-green-500 p-2 rounded">Tambah</button>
             </form>
